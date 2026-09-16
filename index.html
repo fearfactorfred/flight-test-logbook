@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Flight Test">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon.svg">
+<title>Flight Test Logbook Pro</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef2f7;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:#0f172a;color:#fff;padding:14px 16px calc(14px + env(safe-area-inset-top));position:sticky;top:0;z-index:5}header h1{margin:0;font-size:20px}header small{opacity:.7}
+main{max-width:900px;margin:auto;padding:14px 14px 96px}.page{display:none}.page.active{display:block}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:10;background:#fff;border-top:1px solid #cbd5e1;display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:#fff;color:#64748b;padding:10px 2px;font-size:10px}nav button.active{color:#0f172a;font-weight:800}
+.card{background:#fff;border:1px solid #dbe2ea;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px #00000008}
+h2{font-size:21px;margin:4px 0 14px}h3{font-size:16px;margin:0 0 10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:12px;font-weight:700;color:#475569;display:block;margin:7px 0 5px}input,select,textarea{width:100%;font:inherit;border:1px solid #cbd5e1;border-radius:9px;padding:10px;background:#fff}textarea{min-height:75px}
+button{border:0;border-radius:9px;background:#0f172a;color:#fff;font-weight:700;padding:11px 13px}.secondary{background:#e2e8f0;color:#172033}.danger{background:#b91c1c}.success{background:#166534}.warn{background:#a16207}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row button{flex:1}.full{grid-column:1/-1}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.kpi{background:#f8fafc;border-radius:10px;padding:10px;text-align:center}.kpi b{display:block;font-size:21px}
+.item{border-top:1px solid #e2e8f0;padding:12px 0}.item:first-child{border-top:0}.muted{color:#64748b;font-size:12px}.badge{display:inline-block;border-radius:999px;padding:4px 7px;font-size:10px;font-weight:800}.pass{background:#dcfce7;color:#166534}.partial{background:#fef3c7;color:#92400e}.fail{background:#fee2e2;color:#991b1b}.abort{background:#ffedd5;color:#9a3412}.na{background:#e2e8f0;color:#475569}
+.timer{text-align:center;font-size:36px;font-weight:800;margin:10px}.notice{background:#eff6ff;color:#1e40af;padding:10px;border-radius:9px;font-size:12px}.empty{text-align:center;color:#64748b;padding:18px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.kpis{grid-template-columns:repeat(2,1fr)}}
+@media print{nav,header,.no-print,button{display:none!important}main{padding:0}.page{display:none!important}#report{display:block!important}.card{box-shadow:none}}
+</style>
+</head>
+<body>
+<header><h1>Flight Test Logbook Pro</h1><small>Offline-first flight test management</small></header>
+<main>
+
+<section id="home" class="page active">
+<h2>Dashboard</h2>
+<div class="card"><div class="kpis">
+<div class="kpi"><b id="kFlights">0</b>Flights</div><div class="kpi"><b id="kCards">0</b>Cards</div>
+<div class="kpi"><b id="kExec">0</b>Executions</div><div class="kpi"><b id="kOpen">0</b>Open Discrep.</div>
+</div></div>
+<div class="card"><h3>Active Test Day</h3><div id="homeDay" class="muted">None configured</div><br><button onclick="show('day')">Open Test Day</button></div>
+<div class="card"><h3>Quick Actions</h3><div class="row"><button onclick="show('flight')">Log Flight</button><button onclick="show('cards')">Test Cards</button></div></div>
+</section>
+
+<section id="program" class="page">
+<h2>Test Program</h2>
+<div class="card"><div class="grid">
+<div><label>Program ID</label><input id="pId" placeholder="TP-001"></div><div><label>Program Name</label><input id="pName"></div>
+<div class="full"><label>Purpose / Scope</label><textarea id="pScope"></textarea></div>
+<div><label>Test Article</label><input id="pArticle"></div><div><label>Version / Revision</label><input id="pRev"></div>
+<div class="full"><label>Notes</label><textarea id="pNotes"></textarea></div>
+</div><button onclick="saveProgram()">Save Program</button></div>
+<div id="programList" class="card"></div>
+</section>
+
+<section id="day" class="page">
+<h2>Test Day</h2><div class="card"><div class="grid">
+<div><label>Date</label><input id="dDate" type="date"></div><div><label>Program</label><select id="dProgram"></select></div>
+<div><label>Test Article</label><input id="dArticle"></div><div><label>Location / Range</label><input id="dLocation"></div>
+<div><label>Test Lead</label><input id="dLead"></div><div><label>Safety Officer</label><input id="dSafetyLead"></div>
+<div><label>Weather</label><input id="dWeather"></div><div><label>Callsign</label><input id="dCallsign"></div>
+<div class="full"><label>Objectives</label><textarea id="dObjectives"></textarea></div>
+<div class="full"><label>Safety / Hazards / Mitigations</label><textarea id="dSafety"></textarea></div>
+</div><div class="row"><button onclick="saveDay()">Save Test Day</button><button class="secondary" onclick="gps('dLocation')">GPS Location</button></div></div></section>
+
+<section id="flight" class="page">
+<h2>Flight Log</h2><div class="card">
+<div class="timer" id="timer">00:00:00</div><div class="row"><button class="success" id="start" onclick="startFlight()">Start Flight</button><button class="danger" id="stop" onclick="stopFlight()" disabled>End Flight</button></div>
+<div class="grid">
+<div><label>Flight #</label><input id="fNum"></div><div><label>Aircraft</label><select id="fAircraft"></select></div>
+<div><label>Pilot / Operator</label><input id="fPilot"></div><div><label>Test Card</label><select id="fCard"></select></div>
+<div><label>Battery / Fuel</label><input id="fPower"></div><div><label>Max Altitude</label><input id="fAlt"></div>
+<div><label>Max Distance</label><input id="fDist"></div><div><label>GPS</label><input id="fGPS" readonly></div>
+<div><label>Takeoff</label><input id="fTakeoff" type="time"></div><div><label>Landing</label><input id="fLanding" type="time"></div>
+<div class="full"><label>Objective / Maneuvers</label><textarea id="fObj"></textarea></div>
+<div class="full"><label>Observations / Events / Anomalies</label><textarea id="fNotes"></textarea></div>
+</div><div class="row"><button class="secondary" onclick="gps('fGPS')">Capture GPS</button><button onclick="saveFlight()">Save Flight</button></div>
+</div><div id="flightList" class="card"></div></section>
+
+<section id="cards" class="page">
+<h2>Test Cards</h2><div class="card"><div class="grid">
+<div><label>Card ID</label><input id="cId" placeholder="FT-001"></div><div><label>Title</label><input id="cTitle"></div>
+<div><label>Program</label><select id="cProgram"></select></div><div><label>Revision</label><input id="cRev"></div>
+<div class="full"><label>Objective</label><textarea id="cObj"></textarea></div><div class="full"><label>Acceptance Criteria</label><textarea id="cCriteria"></textarea></div>
+</div><button onclick="saveCard()">Save Test Card</button></div><div id="cardsList" class="card"></div></section>
+
+<section id="execute" class="page">
+<h2>Execute Test Point</h2><div class="card"><label>Select Test Card</label><select id="eCard"></select><label>Test Point / Maneuver</label><input id="ePoint" placeholder="e.g. TP-01 Cruise stability">
+<label>Result</label><select id="eResult"><option>PASS</option><option>PARTIAL</option><option>FAIL</option><option>ABORT</option><option>N/A</option></select>
+<div class="grid"><div><label>Actual Measurement</label><input id="eMeasurement"></div><div><label>Units</label><input id="eUnits"></div></div>
+<label>Notes / Observations</label><textarea id="eNotes"></textarea><label>Discrepancy / Corrective Action</label><textarea id="eAction"></textarea>
+<div class="row"><button onclick="recordExecution()">Record Result</button><button class="secondary" onclick="gps('eGPS')">GPS</button></div><input id="eGPS" type="hidden"></div>
+<div id="execList" class="card"></div></section>
+
+<section id="aircraft" class="page">
+<h2>Aircraft Configuration</h2><div class="card"><div class="grid">
+<div><label>Tail / ID</label><input id="aId"></div><div><label>Airframe</label><input id="aFrame"></div>
+<div><label>Motor / Prop</label><input id="aMotor"></div><div><label>Battery / Fuel</label><input id="aBattery"></div>
+<div><label>Flight Controller</label><input id="aFC"></div><div><label>Firmware</label><input id="aFW"></div>
+<div><label>Radio / Receiver</label><input id="aRadio"></div><div><label>Payload</label><input id="aPayload"></div>
+<div class="full"><label>Configuration Notes</label><textarea id="aNotes"></textarea></div>
+</div><button onclick="saveAircraft()">Save Aircraft</button></div><div id="airList" class="card"></div></section>
+
+<section id="discrep" class="page">
+<h2>Discrepancies</h2><div class="card"><div id="discList"></div></div></section>
+
+<section id="report" class="page">
+<h2>End-of-Day Report</h2><div id="reportBody"></div>
+<div class="card no-print"><div class="row"><button onclick="window.print()">Print / Save PDF</button><button onclick="backup()">Export Backup</button><button class="secondary" onclick="document.getElementById('restore').click()">Restore</button></div><input id="restore" type="file" accept=".json" hidden onchange="restore(this)"></div>
+</section>
+
+</main>
+<nav>
+<button id="nhome" class="active" onclick="show('home')">Home</button><button id="nprogram" onclick="show('program')">Program</button>
+<button id="nday" onclick="show('day')">Day</button><button id="nflight" onclick="show('flight')">Flight</button>
+<button id="ncards" onclick="show('cards')">Cards</button><button id="nexecute" onclick="show('execute')">Execute</button>
+<button id="nreport" onclick="show('report')">Report</button>
+</nav>
+
+<script>
+const KEY='ftlogbook_pro_iphone_v5';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"programs":[],"day":null,"flights":[],"cards":[],"executions":[],"aircraft":[],"discrepancies":[]}');
+let flightStart=null, interval=null;
+const $=id=>document.getElementById(id), val=id=>$(id).value, set=(id,x)=>$(id).value=x??'';
+function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+function show(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));let n='n'+id;if($(n))$(n).classList.add('active');render()}
+function saveProgram(){let x={id:val('pId')||'TP-'+String(db.programs.length+1).padStart(3,'0'),name:val('pName'),scope:val('pScope'),article:val('pArticle'),rev:val('pRev'),notes:val('pNotes')};if(!x.name)return alert('Enter program name.');db.programs.push(x);save();['pId','pName','pScope','pArticle','pRev','pNotes'].forEach(x=>set(x,''));alert('Program saved.')}
+function saveDay(){db.day={date:val('dDate'),program:val('dProgram'),article:val('dArticle'),location:val('dLocation'),lead:val('dLead'),safetyLead:val('dSafetyLead'),weather:val('dWeather'),callsign:val('dCallsign'),objectives:val('dObjectives'),safety:val('dSafety')};save();alert('Test day saved.')}
+function startFlight(){flightStart=Date.now();interval=setInterval(()=>{$('timer').textContent=new Date(Math.floor((Date.now()-flightStart)/1000)*1000).toISOString().slice(11,19)},500);$('start').disabled=true;$('stop').disabled=false;set('fTakeoff',new Date().toTimeString().slice(0,5))}
+function stopFlight(){set('fLanding',new Date().toTimeString().slice(0,5));saveFlight();clearInterval(interval);flightStart=null;$('start').disabled=false;$('stop').disabled=true}
+function saveFlight(){let f={id:crypto.randomUUID(),num:val('fNum')||String(db.flights.length+1).padStart(3,'0'),aircraft:val('fAircraft'),pilot:val('fPilot'),card:val('fCard'),power:val('fPower'),alt:val('fAlt'),dist:val('fDist'),gps:val('fGPS'),takeoff:val('fTakeoff'),landing:val('fLanding'),objective:val('fObj'),notes:val('fNotes'),duration:flightStart?Math.round((Date.now()-flightStart)/1000):0,time:new Date().toISOString()};db.flights.push(f);save();if(!flightStart){['fNum','fPilot','fPower','fAlt','fDist','fGPS','fTakeoff','fLanding','fObj','fNotes'].forEach(x=>set(x,''));alert('Flight saved.')}}
+function saveCard(){let x={id:val('cId')||'FT-'+String(db.cards.length+1).padStart(3,'0'),title:val('cTitle'),program:val('cProgram'),rev:val('cRev'),objective:val('cObj'),criteria:val('cCriteria')};if(!x.title)return alert('Enter card title.');db.cards.push(x);save();['cId','cTitle','cRev','cObj','cCriteria'].forEach(x=>set(x,''));alert('Test card saved.')}
+function recordExecution(){let c=val('eCard');if(!c)return alert('Select a card.');let r=val('eResult'),x={id:crypto.randomUUID(),card:c,point:val('ePoint'),result:r,measurement:val('eMeasurement'),units:val('eUnits'),notes:val('eNotes'),action:val('eAction'),gps:val('eGPS'),time:new Date().toISOString()};db.executions.push(x);if(r==='FAIL'||r==='ABORT')db.discrepancies.push({id:crypto.randomUUID(),card:c,point:x.point,result:r,description:x.notes||x.action,status:'OPEN',time:x.time});save();['ePoint','eMeasurement','eUnits','eNotes','eAction','eGPS'].forEach(x=>set(x,''));alert('Result recorded.')}
+function saveAircraft(){let x={id:val('aId')||'Aircraft '+(db.aircraft.length+1),frame:val('aFrame'),motor:val('aMotor'),battery:val('aBattery'),fc:val('aFC'),fw:val('aFW'),radio:val('aRadio'),payload:val('aPayload'),notes:val('aNotes')};db.aircraft.push(x);save();['aId','aFrame','aMotor','aBattery','aFC','aFW','aRadio','aPayload','aNotes'].forEach(x=>set(x,''));alert('Aircraft saved.')}
+function gps(id){if(!navigator.geolocation)return alert('GPS unavailable.');navigator.geolocation.getCurrentPosition(p=>set(id,p.coords.latitude.toFixed(6)+', '+p.coords.longitude.toFixed(6)),e=>alert(e.message),{enableHighAccuracy:true,timeout:10000})}
+function closeDisc(i){db.discrepancies[i].status='CLOSED';save()}
+function backup(){let b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='flight-test-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
+function restore(inp){let f=inp.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);save();alert('Backup restored.')}catch(e){alert('Invalid backup.')}};r.readAsText(f)}
+function options(items,placeholder='Select'){return '<option value="">'+placeholder+'</option>'+items.map(x=>`<option>${x}</option>`).join('')}
+function render(){
+ $('kFlights').textContent=db.flights.length;$('kCards').textContent=db.cards.length;$('kExec').textContent=db.executions.length;$('kOpen').textContent=db.discrepancies.filter(x=>x.status==='OPEN').length;
+ let d=db.day;$('homeDay').innerHTML=d?`<b>${d.date||''} — ${d.article||''}</b><br>${d.program||''}<br>${d.location||''}`:'None configured';
+ $('dProgram').innerHTML=options(db.programs.map(x=>x.id+' — '+x.name));$('cProgram').innerHTML=options(db.programs.map(x=>x.id+' — '+x.name));
+ $('fAircraft').innerHTML=options(db.aircraft.map(x=>x.id+' — '+x.frame));$('fCard').innerHTML=options(db.cards.map(x=>x.id+' — '+x.title));$('eCard').innerHTML=options(db.cards.map(x=>x.id+' — '+x.title));
+ if(d){set('dDate',d.date);set('dProgram',d.program);set('dArticle',d.article);set('dLocation',d.location);set('dLead',d.lead);set('dSafetyLead',d.safetyLead);set('dWeather',d.weather);set('dCallsign',d.callsign);set('dObjectives',d.objectives);set('dSafety',d.safety)}
+ $('programList').innerHTML=db.programs.length?db.programs.map(x=>`<div class=item><b>${x.id} — ${x.name}</b><div class=muted>${x.article||''} · Rev ${x.rev||''}</div><div>${x.scope||''}</div></div>`).join(''):'<div class=empty>No programs.</div>';
+ $('cardsList').innerHTML=db.cards.length?db.cards.map(x=>`<div class=item><b>${x.id} — ${x.title}</b><div class=muted>${x.program||''} · Rev ${x.rev||''}</div><div>${x.objective||''}</div><div class=muted>Acceptance: ${x.criteria||''}</div></div>`).join(''):'<div class=empty>No test cards.</div>';
+ $('execList').innerHTML=db.executions.length?db.executions.slice().reverse().map(x=>`<div class=item><span class="badge ${x.result.toLowerCase().replace('/','')}">${x.result}</span> <b>${x.card}</b> — ${x.point||''}<div>${x.measurement||''} ${x.units||''}</div><div>${x.notes||''}</div></div>`).join(''):'<div class=empty>No executions.</div>';
+ $('airList').innerHTML=db.aircraft.length?db.aircraft.map(x=>`<div class=item><b>${x.id}</b> — ${x.frame||''}<div class=muted>${x.motor||''} · ${x.battery||''} · ${x.fc||''} · ${x.fw||''}</div><div>${x.radio||''} · ${x.payload||''}</div></div>`).join(''):'<div class=empty>No aircraft.</div>';
+ $('flightList').innerHTML=db.flights.length?db.flights.slice().reverse().map(x=>`<div class=item><b>Flight ${x.num}</b> — ${x.aircraft||''}<div class=muted>${x.takeoff||''} → ${x.landing||''} · ${x.alt||''} · ${x.dist||''}</div><div>${x.objective||''}</div><div>${x.notes||''}</div></div>`).join(''):'<div class=empty>No flights.</div>';
+ $('discList').innerHTML=db.discrepancies.length?db.discrepancies.slice().reverse().map((x,i)=>`<div class=item><span class="badge ${x.result==='ABORT'?'abort':'fail'}">${x.result}</span> <b>${x.card}</b> — ${x.point||''}<div>${x.description||''}</div><div class=muted>Status: ${x.status}</div>${x.status==='OPEN'?`<button onclick="closeDisc(${db.discrepancies.length-1-i})">Close Discrepancy</button>`:''}</div>`).join(''):'<div class=empty>No discrepancies.</div>';
+ let total=db.executions.length,pass=db.executions.filter(x=>x.result==='PASS').length,fail=db.executions.filter(x=>x.result==='FAIL').length,abort=db.executions.filter(x=>x.result==='ABORT').length;
+ $('reportBody').innerHTML=`<div class=card><h3>Test Day Summary</h3><p><b>Date:</b> ${d?.date||''}</p><p><b>Program:</b> ${d?.program||''}</p><p><b>Test Article:</b> ${d?.article||''}</p><p><b>Location:</b> ${d?.location||''}</p><p><b>Test Lead:</b> ${d?.lead||''}</p><p><b>Weather:</b> ${d?.weather||''}</p><h3>Results</h3><p>Flights: <b>${db.flights.length}</b> · Executions: <b>${total}</b> · PASS: <b>${pass}</b> · FAIL: <b>${fail}</b> · ABORT: <b>${abort}</b> · Open discrepancies: <b>${db.discrepancies.filter(x=>x.status==='OPEN').length}</b></p><h3>Objectives</h3><p>${d?.objectives||''}</p><h3>Safety</h3><p>${d?.safety||''}</p></div>`;
+}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});render();
+</script>
+</body></html>
